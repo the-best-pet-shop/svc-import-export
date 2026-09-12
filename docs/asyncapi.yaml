@@ -1,0 +1,34 @@
+asyncapi: 2.6.0
+info:
+  title: PetHub Import Export Events
+  version: 1.0.0
+  description: State and checkpoint events emitted for idempotent import/export operations.
+defaultContentType: application/json
+channels:
+  import_export.batch.v1:
+    publish:
+      operationId: importExportBatchStateChanged
+      message:
+        $ref: '#/components/messages/BatchStateChanged'
+components:
+  messages:
+    BatchStateChanged:
+      name: import-export.batch.state-changed.v1
+      payload:
+        $ref: '#/components/schemas/EventEnvelope'
+  schemas:
+    EventEnvelope:
+      type: object
+      required: [eventId, messageId, correlationId, eventType, messageType, schemaVersion, occurredAt, organizationId, payload]
+      properties:
+        eventId: {type: string, format: uuid}
+        messageId: {type: string, format: uuid}
+        correlationId: {type: string, format: uuid}
+        causationId: {type: string, format: uuid}
+        eventType: {type: string, example: import-export.batch.succeeded.v1}
+        messageType: {type: string, example: import-export.batch}
+        schemaVersion: {type: integer, minimum: 1}
+        occurredAt: {type: string, format: date-time}
+        organizationId: {type: string, format: uuid}
+        unitId: {type: string, format: uuid}
+        payload: {type: object, required: [batchId, status, checksum, checkpoint], properties: {batchId: {type: string, format: uuid}, status: {type: string, enum: [queued, running, failed, succeeded, approved, rolled_back]}, checksum: {type: string}, checkpoint: {type: string}, dryRun: {type: boolean}}}

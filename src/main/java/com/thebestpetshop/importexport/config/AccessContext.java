@@ -12,6 +12,7 @@ public record AccessContext(UUID actorId, UUID organizationId, UUID unitId, Stri
         if (requested == null || unitId == null || !unitId.equals(requested)) throw ImportExportException.forbidden("unit scope is required and does not match access context");
     }
     public void requireScope(String expected) {
-        if (scope == null || !(scope.equals(expected) || scope.contains(expected))) throw ImportExportException.forbidden("required scope is missing");
+        if (scope == null || java.util.Arrays.stream(scope.split("[,\\s]+"))
+                .noneMatch(expected::equals)) throw ImportExportException.forbidden("required scope is missing");
     }
 }

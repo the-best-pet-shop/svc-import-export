@@ -1,0 +1,52 @@
+CREATE TABLE import_export_batches (
+  id uuid PRIMARY KEY,
+  organization_id uuid NOT NULL,
+  unit_id uuid,
+  manifest_id varchar(160) NOT NULL,
+  manifest_version integer NOT NULL CHECK (manifest_version > 0),
+  purpose varchar(160) NOT NULL,
+  format varchar(16) NOT NULL CHECK (format IN ('CSV','XLSX')),
+  encoding varchar(80) NOT NULL,
+  timezone varchar(80) NOT NULL,
+  scope_policy varchar(32) NOT NULL CHECK (scope_policy IN ('ORGANIZATION_SHARED','UNIT_LINKED')),
+  checksum varchar(64) NOT NULL,
+  idempotency_key varchar(160) NOT NULL,
+  source_file varchar(255) NOT NULL,
+  content_type varchar(160) NOT NULL,
+  source_content text NOT NULL,
+  status varchar(32) NOT NULL CHECK (status IN ('QUEUED','RUNNING','FAILED','SUCCEEDED','APPROVED','ROLLED_BACK')),
+  dry_run boolean NOT NULL DEFAULT true,
+  approval_reason varchar(1000),
+  created_by uuid NOT NULL,
+  checkpoint_row bigint NOT NULL DEFAULT 0,
+  rows_seen bigint NOT NULL DEFAULT 0,
+  valid_rows bigint NOT NULL DEFAULT 0,
+  invalid_rows bigint NOT NULL DEFAULT 0,
+  conflicts bigint NOT NULL DEFAULT 0,
+  preview_json text,
+  manifest_json text NOT NULL,
+  created_at timestamptz NOT NULL,
+  updated_at timestamptz NOT NULL,
+  approved_at timestamptz,
+  rolled_back_at timestamptz,
+  CONSTRAINT uk_import_batch_idempotency UNIQUE (organization_id, idempotency_key)
+);
+CREATE INDEX ix_import_batch_scope ON import_export_batches (organization_id, unit_id, created_at);
+
+CREATE TABLE import_export_audits (
+  id uuid PRIMARY KEY,
+  organization_id uuid NOT NULL,
+  unit_id uuid,
+  operation varchar(32) NOT NULL,
+  purpose varchar(160) NOT NULL,
+  format varchar(16) NOT NULL,
+  checksum varchar(64) NOT NULL,
+  pii_masked boolean NOT NULL,
+  expires_at timestamptz NOT NULL,
+  actor_id uuid NOT NULL,
+  correlation_id uuid NOT NULL,
+  metadata_json text NOT NULL,
+  artifact_content text NOT NULL,
+  created_at timestamptz NOT NULL
+);
+CREATE INDEX ix_import_export_audit_expiration ON import_export_audits (organization_id, expires_at);
